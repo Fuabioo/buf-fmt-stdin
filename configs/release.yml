@@ -1,0 +1,105 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - # Regular build
+
+    # Custom ldflags.
+    # For more info refer to: https://pkg.go.dev/cmd/go#hdr-Compile_packages_and_dependencies
+    # and https://pkg.go.dev/cmd/link
+    #
+    # Default: '-s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}} -X main.builtBy=goreleaser'.
+    # Templates: allowed.
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+
+    # Custom build tags templates.
+    # For more info refer to: https://pkg.go.dev/cmd/go#hdr-Build_constraints
+    tags:
+      - osusergo
+      - netgo
+      - static_build
+      - feature
+
+    # Custom environment variables to be set during the builds.
+    # Invalid environment variables will be ignored.
+    # For more info refer to: https://pkg.go.dev/cmd/go#hdr-Environment_variables
+    #
+    # Default: os.Environ() ++ env config section.
+    # Templates: allowed.
+    env:
+      - CGO_ENABLED=0
+
+    # GOARCH to build for.
+    # For more info refer to: https://pkg.go.dev/cmd/go#hdr-Environment_variables
+    #
+    # Default: [ '386', 'amd64', 'arm64' ].
+    goarch:
+      - amd64
+      - arm
+      - arm64
+
+    # Set the modified timestamp on the output binary, typically
+    # you would do this to ensure a build was reproducible.
+    # Pass an empty string to skip modifying the output.
+    #
+    # Templates: allowed.
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+    tool: "go"
+
+    # List of combinations of GOOS + GOARCH + GOARM to ignore.
+    ignore:
+      - goos: windows
+        goarch: arm
+      - goos: windows
+        goarch: arm64
+      - goos: darwin
+        goarch: amd64
+
+checksum:
+  # https://goreleaser.com/customization/checksum/
+  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+  algorithm: sha256
+
+archives:
+  - formats: [tar.gz]
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+changelog:
+  # https://goreleaser.com/customization/changelog/
+  use: github
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+  groups:
+    - title: "Features 💡"
+      regexp: "(?i).*Adding.*|(?i).*Init.*"
+      order: 0
+    - title: "Adjustments 🎛️"
+      regexp: "(?i).*Update.*|(?i).*Updating.*|(?i).*Upgrading.*|(?i).*Tweaking.*"
+      order: 1
+    - title: "Cleanup 🧹🧽"
+      regexp: "(?i).*Cleaning.*"
+      order: 2
+    - title: "Bug fixes 🐞🔧"
+      regexp: "(?i).*Fix.*|(?i).*Bug.*"
+      order: 3
+    - title: Others
+      order: 999

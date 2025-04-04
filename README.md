@@ -17,7 +17,7 @@ chmod +x buf-fmt-stdin
 ## Usage
 
 Since this is a wrapper to buf-fmt fix command then you can use any flag
-defined in this tool such as `--config` and `--cache-file`.
+defined in this tool such as `--config`.
 
 ### Zed
 
